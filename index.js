@@ -286,6 +286,51 @@ module.exports = function makeHyperFetch (opts = {}) {
           }
         }
       } else if ((method === 'GET') || (method === 'HEAD')) {
+        if (method === 'GET' && headers.get('Accept') === 'text/event-stream') {
+          async function * startReader () {
+            let _resolve = null
+            let _reject = null
+            let lastPromise = null
+
+            updatePromise()
+
+            const watcher = archive.watch(path, () => {
+              _resolve(archive.version)
+              updatePromise()
+            })
+
+            watcher.on('error', (e) => _reject(e))
+
+            try {
+              while (true) {
+                const version = await lastPromise()
+                yield `id: ${version}
+event: changed
+data: ${JSON.stringify(version)}
+
+`
+              }
+            } finally {
+              // TODO: We might have a memory leak here
+              // Might not be invoked if no `yield` happens
+              watcher.destroy()
+            }
+
+            function updatePromise () {
+              lastPromise = new Promise((resolve, reject) => {
+                _resolve = resolve
+                _reject = reject
+              })
+            }
+          }
+          responseHeaders['Content-Type'] = 'text/event-stream'
+          return {
+            statusCode: 200,
+            headers: responseHeaders,
+            data: startReader()
+          }
+        }
+
         let stat = null
         let finalPath = path
 

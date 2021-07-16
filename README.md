@@ -96,8 +96,7 @@ Files in the directory will be listed under their name, sub-directories will hav
 
 `NAME` can either be the 64 character hex key for an archive, a domain to parse with [dat-dns](https://www.npmjs.com/package/dat-dns), or a name for an archive which allows you to write to it.
 
-### `fetch('hyper://NAME/example.txt?noResolve', {method: 'GET'})`
-
+### `fetch('hyper://NAME/example/?noResolve', {method: 'GET'})`
 
 Adding `?noResolve` to a URL will prevent resolving `index.html` files and will attempt to load the path as is.
 This can be useful for list files in a directory that would normally render as a page.
@@ -105,6 +104,17 @@ This can be useful for list files in a directory that would normally render as a
 `NAME` can either be the 64 character hex key for an archive, a domain to parse with [dat-dns](https://www.npmjs.com/package/dat-dns), or a name for an archive which allows you to write to it.
 
 The response headers will contain `X-Blocks` for the number of blocks of data this file represents on disk, and `X-Blocks-Downloaded` which is the number of blocks from this file that have been downloaded locally.
+
+### `fetch('hyper://NAME/', {headers: {'Accept': 'text/event-stream'}})`
+
+Using the `text/event-stream` content type in the `Accept` header will get back an event stream full of `change` events for every time a file at that path changes.
+
+This can be useful if you want to trigger a download every time a file changes.
+The `data` for the event will contain the version at the time of the change.
+
+This stream of data can be used with the `EventSource` in browsers.
+
+Currently there's no way to watch for changes to specific files, so that should be handled at the application level.
 
 ### `fetch('hyper://NAME/example.txt', {method: 'PUT', body: 'Hello World'})`
 

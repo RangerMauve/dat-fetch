@@ -154,4 +154,24 @@ async function runTests () {
 
     t.ok(response.ok, 'Succesfully loaded homepage')
   })
+
+  test('Watch for changes', async (t) => {
+    const response = await fetch('hyper://example/', {
+      headers: {
+        Accept: 'text/event-stream'
+      }
+    })
+
+    t.ok(response.ok, 'Able to open request')
+    t.equal(response.headers.get('Content-Type'), 'text/event-stream', 'Response is event stream')
+
+    const reader = await response.body.getReader()
+
+    await Promise.all([
+      reader.read(),
+      fetch('hyper://example/example4.txt', { method: 'PUT', body: 'Hello World' })
+    ])
+
+    t.pass('Got an event after writing')
+  })
 }
